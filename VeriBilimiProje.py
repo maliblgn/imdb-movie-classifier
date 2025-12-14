@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+# ============================================================
 # 0) VERİYİ YÜKLE VE ADIM 1'DEKİ TEMEL ÖNİŞLEMEYİ TEKRARLA
 #    - high_rating (0/1) hedef değişkenini oluştur
 #    - runtimeMinutes = 0 olanları temizle
