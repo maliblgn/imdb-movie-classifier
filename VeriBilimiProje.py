@@ -1,12 +1,13 @@
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import os
+from scipy import stats
 
 # ============================================================
-# 0) VERİYİ YÜKLE VE ADIM 1'DEKİ TEMEL ÖNİŞLEMEYİ TEKRARLA
+# 0) VERİYİ YÜKLE VE TEMEL ÖNİŞLEME
 #    - high_rating (0/1) hedef değişkenini oluştur
-#    - runtimeMinutes = 0 olanları temizle
+#    - runtimeMinutes = 0 olanları temizle (gerekirse)
 #    - numVotes_log (log dönüşüm) oluştur
 #    - primary_genre (ana tür) çıkar
 # ============================================================
@@ -20,7 +21,7 @@ df = pd.read_csv(csv_path)
 threshold = 7.0
 df["high_rating"] = (df["averageRating"] >= threshold).astype(int)
 
-# Süresi 0 olan filmleri temizle (mantıksız kayıtlar)
+# Süresi 0 olan filmleri temizle (mantıksız kayıtlar olsaydı)
 df = df[df["runtimeMinutes"] > 0].copy()
 
 # Oy sayısına log dönüşümü
@@ -29,17 +30,21 @@ df["numVotes_log"] = np.log1p(df["numVotes"])
 # Tür bilgisinden ana türü çıkar
 df["primary_genre"] = df["genres"].str.split(",").str[0]
 
-# (İsteğe bağlı) Grafik ayarları
+# Analizde kullanacağımız sayısal sütunlar
+num_cols = ["averageRating", "runtimeMinutes", "numVotes_log", "startYear"]
+
+# Matplotlib genel ayarları (isteğe bağlı)
 plt.rcParams["figure.figsize"] = (8, 5)
 plt.rcParams["axes.grid"] = True
 
 
 # ============================================================
-# Grafik 1: IMDb puanlarının genel dağılımını görmek için
-#           averageRating sütunundan histogram çiziyoruz.
-#           Amaç: Filmler hangi puan aralığında yoğunlaşıyor?
+# 1) VERİ GÖRSELLEŞTİRME (EDA)
+#    Amaç: Dağılımları ve temel ilişkileri görsel olarak incelemek
 # ============================================================
 
+# Grafik 1: IMDb puanlarının genel dağılımı (averageRating histogram)
+# Amaç: Filmler hangi puan aralığında yoğunlaşıyor?
 plt.figure()
 plt.hist(df["averageRating"], bins=20)
 plt.xlabel("IMDb Puanı (averageRating)")
@@ -48,12 +53,8 @@ plt.title("IMDb Puanı Dağılımı")
 plt.show()
 
 
-# ============================================================
-# Grafik 2: Yüksek/düşük puanlı film sınıflarının dağılımını
-#           görmek için high_rating (0/1) üzerinden bar grafiği.
-#           Amaç: Sınıflar dengeli mi, dengesiz mi?
-# ============================================================
-
+# Grafik 2: Yüksek/düşük puanlı film sınıflarının dağılımı (high_rating bar chart)
+# Amaç: Sınıflar dengeli mi, dengesiz mi?
 class_counts = df["high_rating"].value_counts().sort_index()
 
 plt.figure()
@@ -69,12 +70,8 @@ print("\nSınıf oranları:")
 print(df["high_rating"].value_counts(normalize=True))
 
 
-# ============================================================
-# Grafik 3: Film sürelerinin dağılımını görmek için
-#           runtimeMinutes üzerinden histogram.
-#           Amaç: Filmlerin çoğu hangi süre aralığında?
-# ============================================================
-
+# Grafik 3: Film sürelerinin dağılımı (runtimeMinutes histogram)
+# Amaç: Filmlerin çoğu hangi süre aralığında?
 plt.figure()
 plt.hist(df["runtimeMinutes"], bins=20)
 plt.xlabel("Süre (dakika)")
@@ -83,12 +80,8 @@ plt.title("Film Süresi Dağılımı")
 plt.show()
 
 
-# ============================================================
-# Grafik 4: Film sürelerindeki olası uç değerleri (outlier)
-#           görmek için runtimeMinutes üzerinden boxplot.
-#           Amaç: Aşırı uzun/kısa filmleri görselleştirmek.
-# ============================================================
-
+# Grafik 4: Film sürelerindeki olası uç değerler (runtimeMinutes boxplot)
+# Amaç: Aşırı uzun/kısa filmleri görselleştirmek.
 plt.figure()
 plt.boxplot(df["runtimeMinutes"], vert=False)
 plt.xlabel("Süre (dakika)")
@@ -96,12 +89,8 @@ plt.title("Film Süresi Boxplot")
 plt.show()
 
 
-# ============================================================
-# Grafik 5: Oy sayılarının ham dağılımını görmek için
-#           numVotes üzerinden histogram.
-#           Amaç: Oy sayıları çarpık mı, geniş mi dağılıyor?
-# ============================================================
-
+# Grafik 5: Oy sayılarının ham dağılımı (numVotes histogram)
+# Amaç: Oy sayıları çarpık mı, geniş mi dağılıyor?
 plt.figure()
 plt.hist(df["numVotes"], bins=20)
 plt.xlabel("Oy Sayısı (numVotes)")
@@ -110,12 +99,8 @@ plt.title("Oy Sayısı Dağılımı (Ham)")
 plt.show()
 
 
-# ============================================================
-# Grafik 6: Log dönüşüm uygulanmış oy sayılarının dağılımını
-#           görmek için numVotes_log üzerinden histogram.
-#           Amaç: Log dönüşüm sonrası dağılım daha dengeli mi?
-# ============================================================
-
+# Grafik 6: Log dönüşüm uygulanmış oy sayısı dağılımı (numVotes_log histogram)
+# Amaç: Log dönüşüm sonrası dağılım daha dengeli mi?
 plt.figure()
 plt.hist(df["numVotes_log"], bins=20)
 plt.xlabel("Log(1 + Oy Sayısı) (numVotes_log)")
@@ -124,13 +109,8 @@ plt.title("Oy Sayısı Dağılımı (Log Dönüşüm Sonrası)")
 plt.show()
 
 
-# ============================================================
-# Grafik 7: Türlere göre ortalama IMDb puanlarını göstermek için
-#           primary_genre bazında averageRating ortalamasını alıp
-#           en yüksek ortalamaya sahip ilk 10 tür için bar grafiği.
-#           Amaç: Hangi türler ortalamada daha yüksek puanlı?
-# ============================================================
-
+# Grafik 7: Türlere göre ortalama IMDb puanı (primary_genre bar chart)
+# Amaç: Hangi türler ortalamada daha yüksek puanlı?
 genre_mean_rating = df.groupby("primary_genre")["averageRating"].mean().sort_values(ascending=False)
 
 top_n = 10
@@ -149,17 +129,85 @@ print("\nTürlere göre ortalama IMDb puanı (ilk 10):")
 print(genre_mean_top)
 
 
-# ============================================================
-# Grafik 8 (İsteğe Bağlı): IMDb puanı ile log oy sayısı arasındaki
-#           ilişkiyi görmek için numVotes_log vs averageRating
-#           scatter plot.
-#           Amaç: Daha çok oy alan filmler, belirli bir puan
-#                  aralığında mı toplanıyor, dağınık mı?
-# ============================================================
-
+# Grafik 8: IMDb puanı ile log(oy sayısı) ilişkisi (scatter plot)
+# Amaç: Daha çok oy alan filmler belirli bir puan aralığında mı toplanıyor?
 plt.figure()
 plt.scatter(df["numVotes_log"], df["averageRating"], alpha=0.5)
 plt.xlabel("Log(1 + Oy Sayısı) (numVotes_log)")
 plt.ylabel("IMDb Puanı (averageRating)")
 plt.title("IMDb Puanı vs Oy Sayısı (Log Ölçek)")
 plt.show()
+
+
+# ============================================================
+# 2) VERİNİN İSTATİSTİKSEL ANALİZLERİ
+#    Amaç: Tanımlayıcı istatistikler, normallik ve korelasyon
+# ============================================================
+
+# 2.1) Merkezi eğilim ve temel tanımlayıcı istatistikler
+#      (ortalama, medyan, min, max, std, çeyrekler)
+desc = df[num_cols].describe().T  # count, mean, std, min, 25%, 50%, 75%, max
+print("\nSayısal değişkenler için tanımlayıcı istatistikler:")
+print(desc)
+
+# Mod (mode) örneği: IMDb puanları için
+rating_mode = df["averageRating"].mode()
+print("\nIMDb puanlarının modu (en çok tekrar eden değerler):")
+print(rating_mode.values)
+
+# Sınıfa göre (high_rating) ortalama süre ve puan
+group_summary = df.groupby("high_rating")[["averageRating", "runtimeMinutes", "numVotes_log"]].mean()
+print("\nSınıflara göre ortalama değerler (0=düşük/orta, 1=yüksek):")
+print(group_summary)
+
+
+# 2.2) Değişkenlik, çarpıklık (skewness) ve basıklık (kurtosis)
+#      Amaç: Varyans, std, aralık, çarpıklık, basıklık hesaplamak.
+variance = df[num_cols].var()
+std_dev  = df[num_cols].std()
+data_min = df[num_cols].min()
+data_max = df[num_cols].max()
+value_range = data_max - data_min
+
+skewness = df[num_cols].skew()       # Çarpıklık
+kurtosis = df[num_cols].kurtosis()   # Basıklık (excess kurtosis)
+
+stats_table = pd.DataFrame({
+    "variance": variance,
+    "std_dev": std_dev,
+    "min": data_min,
+    "max": data_max,
+    "range": value_range,
+    "skewness": skewness,
+    "kurtosis": kurtosis
+})
+
+print("\nDeğişkenlik, çarpıklık ve basıklık özet tablosu:")
+print(stats_table)
+
+
+# 2.3) Normallik incelemesi (Shapiro-Wilk testi)
+#      H0: Veri normal dağılmıştır.
+#      p < 0.05 → H0 reddedilir (normal değil).
+print("\nShapiro-Wilk normallik testi sonuçları:")
+
+for col in ["averageRating", "runtimeMinutes", "numVotes_log"]:
+    stat, p = stats.shapiro(df[col])
+    print(f"\nDeğişken: {col}")
+    print("  Test istatistiği:", stat)
+    print("  p-değeri:", p)
+    if p < 0.05:
+        print("  → p < 0.05: Normal dağılım varsayımı reddedilir (normal değil).")
+    else:
+        print("  → p ≥ 0.05: Normal dağılım varsayımı reddedilemez (normal kabul edilebilir).")
+
+
+# 2.4) Korelasyon analizi
+#      Amaç: IMDb puanı ile diğer sayısal değişkenler arasındaki
+#             doğrusal ilişkiyi (korelasyon katsayısı) görmek.
+corr_matrix = df[["averageRating", "runtimeMinutes", "numVotes_log", "startYear"]].corr()
+print("\nKorelasyon matrisi:")
+print(corr_matrix)
+
+print("\nIMDb puanı ile diğer değişkenlerin korelasyonu:")
+print(corr_matrix["averageRating"])
