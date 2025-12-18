@@ -3,6 +3,21 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    confusion_matrix,
+    classification_report
+)
+
 
 # ============================================================
 # 0) VERİYİ YÜKLE VE TEMEL ÖNİŞLEME
@@ -211,3 +226,151 @@ print(corr_matrix)
 
 print("\nIMDb puanı ile diğer değişkenlerin korelasyonu:")
 print(corr_matrix["averageRating"])
+
+# ============================================================
+# 3) SINIFLANDIRMA MODELİNİ OLUŞTURMA
+#    Amaç: Kullanılacak özellikleri (X) ve hedefi (y) tanımlayıp,
+#           Logistic Regression ve Random Forest için
+#           ön işleme + model pipeline yapısını kurmak.
+#
+#    Bu aşamada:
+#      - Sadece model "yapısı" oluşturuluyor.
+#      - Henüz eğitim (fit) ve test değerlendirmesi yapılmıyor.
+#        (Bunlar bir sonraki adımda: Eğitim/Test Aşamaları)
+# ============================================================
+
+# Modelde kullanacağımız sayısal ve kategorik özellikler
+numeric_features = ["startYear", "runtimeMinutes", "numVotes_log"]
+categorical_features = ["primary_genre"]
+
+# Özellik matrisi (X) ve hedef vektör (y)
+X = df[numeric_features + categorical_features]
+y = df["high_rating"]
+
+print("\nÖzellik matrisi (X) ve hedef (y) hazırlandı.")
+print("X shape:", X.shape)
+print("y shape:", y.shape)
+
+# -----------------------------
+# Ön işleme adımları:
+# - Sayısal özellikler: StandardScaler ile ölçekleme
+# - Kategorik özellikler: OneHotEncoder ile one-hot kodlama
+# -----------------------------
+
+numeric_transformer = StandardScaler()
+categorical_transformer = OneHotEncoder(handle_unknown="ignore")
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("num", numeric_transformer, numeric_features),
+        ("cat", categorical_transformer, categorical_features),
+    ]
+)
+
+# -----------------------------
+# MODEL 1: Logistic Regression
+# -----------------------------
+log_reg_model = Pipeline(
+    steps=[
+        ("preprocess", preprocessor),            # Önce ön işleme
+        ("clf", LogisticRegression(max_iter=1000))
+    ]
+)
+
+# -----------------------------
+# MODEL 2: Random Forest Classifier
+# -----------------------------
+rf_model = Pipeline(
+    steps=[
+        ("preprocess", preprocessor),
+        ("clf", RandomForestClassifier(
+            n_estimators=200,
+            random_state=42
+        ))
+    ]
+)
+
+print("\nSınıflandırma modellerinin pipeline yapıları oluşturuldu.")
+print("\nLogistic Regression Pipeline:")
+print(log_reg_model)
+
+print("\nRandom Forest Pipeline:")
+print(rf_model)
+
+# ============================================================
+# 4) SINIFLANDIRMA MODELİNİN EĞİTİMİ VE TEST EDİLMESİ
+#    Amaç:
+#      - Veriyi eğitim ve test olarak ayırmak
+#      - Logistic Regression ve Random Forest modellerini eğitmek
+#      - Test seti üzerinde temel sınıflandırma metriklerini
+#        (accuracy, precision, recall, F1) hesaplamak
+# ============================================================
+
+# 4.1) Eğitim / test ayrımı
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,      # %80 eğitim / %20 test
+    stratify=y,         # sınıf dengesini korumak için
+    random_state=42
+)
+
+print("\nEğitim/Test ayrımı tamamlandı.")
+print("Eğitim seti boyutu:", X_train.shape[0])
+print("Test seti boyutu   :", X_test.shape[0])
+
+# 4.2) Logistic Regression modelinin eğitimi ve değerlendirilmesi
+log_reg_model.fit(X_train, y_train)
+y_pred_log = log_reg_model.predict(X_test)
+
+acc_log = accuracy_score(y_test, y_pred_log)
+prec_log = precision_score(y_test, y_pred_log)
+rec_log = recall_score(y_test, y_pred_log)
+f1_log = f1_score(y_test, y_pred_log)
+
+print("\n=== LOGISTIC REGRESSION – Test Sonuçları ===")
+print(f"Accuracy : {acc_log:.4f}")
+print(f"Precision: {prec_log:.4f}")
+print(f"Recall   : {rec_log:.4f}")
+print(f"F1-score : {f1_log:.4f}")
+
+print("\nClassification Report (Logistic Regression):")
+print(classification_report(y_test, y_pred_log))
+
+cm_log = confusion_matrix(y_test, y_pred_log)
+print("Confusion Matrix (Logistic Regression):")
+print(cm_log)
+
+# 4.3) Random Forest modelinin eğitimi ve değerlendirilmesi
+rf_model.fit(X_train, y_train)
+y_pred_rf = rf_model.predict(X_test)
+
+acc_rf = accuracy_score(y_test, y_pred_rf)
+prec_rf = precision_score(y_test, y_pred_rf)
+rec_rf = recall_score(y_test, y_pred_rf)
+f1_rf = f1_score(y_test, y_pred_rf)
+
+print("\n=== RANDOM FOREST – Test Sonuçları ===")
+print(f"Accuracy : {acc_rf:.4f}")
+print(f"Precision: {prec_rf:.4f}")
+print(f"Recall   : {rec_rf:.4f}")
+print(f"F1-score : {f1_rf:.4f}")
+
+print("\nClassification Report (Random Forest):")
+print(classification_report(y_test, y_pred_rf))
+
+cm_rf = confusion_matrix(y_test, y_pred_rf)
+print("Confusion Matrix (Random Forest):")
+print(cm_rf)
+
+# 4.4) Modellerin özet karşılaştırması (test seti)
+comparison_df = pd.DataFrame({
+    "Model": ["Logistic Regression", "Random Forest"],
+    "Accuracy": [acc_log, acc_rf],
+    "Precision": [prec_log, prec_rf],
+    "Recall": [rec_log, rec_rf],
+    "F1-score": [f1_log, f1_rf]
+})
+
+print("\n=== MODEL KARŞILAŞTIRMA (Test Seti) ===")
+print(comparison_df.to_string(index=False))
