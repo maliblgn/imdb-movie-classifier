@@ -19,7 +19,7 @@ Bu proje, IMDb'den alınan film verileri üzerinde **IMDb puanına göre sınıf
 
 ## 2. Veri Seti
 
-Kullanılan veri seti `imdb_clean_2000.csv` dosyasından oluşmaktadır ve 2000 film içermektedir.
+Kullanılan veri seti `IMDB_2000.csv` dosyasından oluşmaktadır ve 2000 film içermektedir.
 
 Ana değişkenler:
 - `primaryTitle`: Filmin adı  
@@ -198,7 +198,7 @@ Bu yapı ile özellik matrisi **X**; hedef vektörü ise **y** olacak şekilde t
 
 ### 6.2. Ön İşleme Adımları (Preprocessing)
 
-Hocanın dersinde anlatıldığı şekilde, farklı tipteki değişkenlere farklı ön işlemler uygulanmıştır:
+Ders notlarıyla uyumlu olarak, farklı tipteki değişkenlere farklı ön işlemler uygulanmıştır:
 
 - **Sayısal değişkenler için:**
   - `StandardScaler` kullanılarak ölçekleme yapılmıştır.  
@@ -235,7 +235,7 @@ Pipeline yaklaşımı sayesinde:
 
 - Ön işleme ve model tek bir nesne altında birleştirilmiş,
 - Eğitim (fit) ve tahmin (predict) adımlarında veri hazırlama süreçleri otomatik hale getirilmiştir,
-- Farklı modeller aynı ön işleme adımlarını paylaşarak tutarlı bir şekilde denenebilir hale gelmiştir.
+- Farklı modeller aynı ön işleme adımlarını paylaşarak tutarlı bir şekilde denenebilir hale getirilmiştir.
 
 Bu aşamada yalnızca model yapıları tanımlanmış; eğitim ve test süreçleri bir sonraki adımda ele alınmıştır.
 
@@ -296,13 +296,48 @@ Random Forest, ağaç tabanlı ve doğrusal olmayan ilişkileri yakalayabilen bi
   - Genel doğrulukta (accuracy) daha iyi,
   - “Yüksek puanlı film” sınıfını daha temiz yakalamada (precision),
   - Yüksek puanlı filmleri kaçırmama açısından (recall),
-  - Genel denge açısından (F1-score) daha başarılı olduğunu görsel olarak karşılaştırmaya imkan tanımaktadır.
+  - Genel denge açısından (F1-score) daha başarılı olduğunu karşılaştırmalı olarak incelemeye imkan tanımaktadır.
 
 Genel olarak, Logistic Regression **daha basit ve yorumlanabilir** bir model iken, Random Forest **esneklik ve doğruluk** açısından avantaj sağlayabilir. Projenin bağlamına göre, hem performans hem de yorumlanabilirlik dikkate alınarak hangi modelin tercih edileceği değerlendirilebilir.
 
 ---
 
-## 8. Kullanılan Teknolojiler
+## 8. Sonuçların Görsel Analizi
+
+Model çıktıları sadece sayısal metriklerle değil, aynı zamanda grafikler üzerinden de değerlendirilmiştir.
+
+### 8.1. Performans Metriklerinin Çubuk Grafik ile Karşılaştırılması
+
+- Logistic Regression ve Random Forest için hesaplanan dört temel metrik:
+  - Accuracy  
+  - Precision  
+  - Recall  
+  - F1-score  
+
+ikonik bir **çubuk grafik** üzerinde yan yana gösterilmiştir.
+
+- Bu grafik sayesinde:
+  - Her bir metrik için hangi modelin daha iyi olduğu hızlıca görülebilmektedir.
+  - Özellikle precision–recall–F1 dengesi görsel olarak rahatça yorumlanabilmektedir.
+
+### 8.2. Confusion Matrix Görselleştirmeleri
+
+Her iki model için de **confusion matrix** (karmaşıklık matrisi) ısı haritası şeklinde görselleştirilmiştir:
+
+- Satırlar: Gerçek sınıf (0: düşük/orta, 1: yüksek)  
+- Sütunlar: Tahmin edilen sınıf (0 veya 1)  
+
+Bu görseller, özellikle şu soruları yanıtlamaya yardımcı olur:
+
+- Model daha çok hangi sınıfta hata yapıyor?  
+- Yüksek puanlı filmleri düşük olarak tahmin etme (false negative) oranı nedir?  
+- Düşük puanlı filmleri yüksek sanma (false positive) durumu ne seviyede?  
+
+Bu analiz, metrik tablolarını destekleyerek, modelin pratik kullanımda hangi tür hataları üretme eğiliminde olduğunu daha iyi anlamayı sağlar.
+
+---
+
+## 9. Kullanılan Teknolojiler
 
 - Python  
 - Pandas  
@@ -318,12 +353,12 @@ Genel olarak, Logistic Regression **daha basit ve yorumlanabilir** bir model ike
 
 ---
 
-## 9. Proje Yapısı (Önerilen)
+## 10. Proje Yapısı (Önerilen)
 
 ```text
 .
 ├─ data/
-│  └─ imdb_clean_2000.csv
+│  └─ IMDB_2000.csv
 ├─ notebooks/
 │  ├─ 01_preprocessing_and_eda.ipynb
 │  └─ 02_modeling.ipynb

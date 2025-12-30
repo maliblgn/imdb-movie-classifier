@@ -29,7 +29,7 @@ from sklearn.metrics import (
 
 # Script dosyasının dizinini al ve CSV dosyasını bu dizinden oku
 script_dir = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(script_dir, "imdb_clean_2000.csv")
+csv_path = os.path.join(script_dir, "IMDB_2000.csv")
 df = pd.read_csv(csv_path)
 
 # Hedef değişken: IMDb puanı 7 ve üzeri olanlara 1, diğerlerine 0
@@ -67,7 +67,6 @@ plt.ylabel("Film Sayısı")
 plt.title("IMDb Puanı Dağılımı")
 plt.show()
 
-
 # Grafik 2: Yüksek/düşük puanlı film sınıflarının dağılımı (high_rating bar chart)
 # Amaç: Sınıflar dengeli mi, dengesiz mi?
 class_counts = df["high_rating"].value_counts().sort_index()
@@ -84,7 +83,6 @@ print(class_counts)
 print("\nSınıf oranları:")
 print(df["high_rating"].value_counts(normalize=True))
 
-
 # Grafik 3: Film sürelerinin dağılımı (runtimeMinutes histogram)
 # Amaç: Filmlerin çoğu hangi süre aralığında?
 plt.figure()
@@ -94,7 +92,6 @@ plt.ylabel("Film Sayısı")
 plt.title("Film Süresi Dağılımı")
 plt.show()
 
-
 # Grafik 4: Film sürelerindeki olası uç değerler (runtimeMinutes boxplot)
 # Amaç: Aşırı uzun/kısa filmleri görselleştirmek.
 plt.figure()
@@ -102,7 +99,6 @@ plt.boxplot(df["runtimeMinutes"], vert=False)
 plt.xlabel("Süre (dakika)")
 plt.title("Film Süresi Boxplot")
 plt.show()
-
 
 # Grafik 5: Oy sayılarının ham dağılımı (numVotes histogram)
 # Amaç: Oy sayıları çarpık mı, geniş mi dağılıyor?
@@ -113,7 +109,6 @@ plt.ylabel("Film Sayısı")
 plt.title("Oy Sayısı Dağılımı (Ham)")
 plt.show()
 
-
 # Grafik 6: Log dönüşüm uygulanmış oy sayısı dağılımı (numVotes_log histogram)
 # Amaç: Log dönüşüm sonrası dağılım daha dengeli mi?
 plt.figure()
@@ -122,7 +117,6 @@ plt.xlabel("Log(1 + Oy Sayısı) (numVotes_log)")
 plt.ylabel("Film Sayısı")
 plt.title("Oy Sayısı Dağılımı (Log Dönüşüm Sonrası)")
 plt.show()
-
 
 # Grafik 7: Türlere göre ortalama IMDb puanı (primary_genre bar chart)
 # Amaç: Hangi türler ortalamada daha yüksek puanlı?
@@ -142,7 +136,6 @@ plt.show()
 
 print("\nTürlere göre ortalama IMDb puanı (ilk 10):")
 print(genre_mean_top)
-
 
 # Grafik 8: IMDb puanı ile log(oy sayısı) ilişkisi (scatter plot)
 # Amaç: Daha çok oy alan filmler belirli bir puan aralığında mı toplanıyor?
@@ -175,7 +168,6 @@ group_summary = df.groupby("high_rating")[["averageRating", "runtimeMinutes", "n
 print("\nSınıflara göre ortalama değerler (0=düşük/orta, 1=yüksek):")
 print(group_summary)
 
-
 # 2.2) Değişkenlik, çarpıklık (skewness) ve basıklık (kurtosis)
 #      Amaç: Varyans, std, aralık, çarpıklık, basıklık hesaplamak.
 variance = df[num_cols].var()
@@ -200,7 +192,6 @@ stats_table = pd.DataFrame({
 print("\nDeğişkenlik, çarpıklık ve basıklık özet tablosu:")
 print(stats_table)
 
-
 # 2.3) Normallik incelemesi (Shapiro-Wilk testi)
 #      H0: Veri normal dağılmıştır.
 #      p < 0.05 → H0 reddedilir (normal değil).
@@ -216,7 +207,6 @@ for col in ["averageRating", "runtimeMinutes", "numVotes_log"]:
     else:
         print("  → p ≥ 0.05: Normal dağılım varsayımı reddedilemez (normal kabul edilebilir).")
 
-
 # 2.4) Korelasyon analizi
 #      Amaç: IMDb puanı ile diğer sayısal değişkenler arasındaki
 #             doğrusal ilişkiyi (korelasyon katsayısı) görmek.
@@ -227,16 +217,12 @@ print(corr_matrix)
 print("\nIMDb puanı ile diğer değişkenlerin korelasyonu:")
 print(corr_matrix["averageRating"])
 
+
 # ============================================================
 # 3) SINIFLANDIRMA MODELİNİ OLUŞTURMA
 #    Amaç: Kullanılacak özellikleri (X) ve hedefi (y) tanımlayıp,
 #           Logistic Regression ve Random Forest için
 #           ön işleme + model pipeline yapısını kurmak.
-#
-#    Bu aşamada:
-#      - Sadece model "yapısı" oluşturuluyor.
-#      - Henüz eğitim (fit) ve test değerlendirmesi yapılmıyor.
-#        (Bunlar bir sonraki adımda: Eğitim/Test Aşamaları)
 # ============================================================
 
 # Modelde kullanacağımız sayısal ve kategorik özellikler
@@ -251,12 +237,7 @@ print("\nÖzellik matrisi (X) ve hedef (y) hazırlandı.")
 print("X shape:", X.shape)
 print("y shape:", y.shape)
 
-# -----------------------------
-# Ön işleme adımları:
-# - Sayısal özellikler: StandardScaler ile ölçekleme
-# - Kategorik özellikler: OneHotEncoder ile one-hot kodlama
-# -----------------------------
-
+# Ön işleme adımları
 numeric_transformer = StandardScaler()
 categorical_transformer = OneHotEncoder(handle_unknown="ignore")
 
@@ -267,9 +248,7 @@ preprocessor = ColumnTransformer(
     ]
 )
 
-# -----------------------------
 # MODEL 1: Logistic Regression
-# -----------------------------
 log_reg_model = Pipeline(
     steps=[
         ("preprocess", preprocessor),            # Önce ön işleme
@@ -277,9 +256,7 @@ log_reg_model = Pipeline(
     ]
 )
 
-# -----------------------------
 # MODEL 2: Random Forest Classifier
-# -----------------------------
 rf_model = Pipeline(
     steps=[
         ("preprocess", preprocessor),
@@ -296,6 +273,7 @@ print(log_reg_model)
 
 print("\nRandom Forest Pipeline:")
 print(rf_model)
+
 
 # ============================================================
 # 4) SINIFLANDIRMA MODELİNİN EĞİTİMİ VE TEST EDİLMESİ
@@ -374,3 +352,69 @@ comparison_df = pd.DataFrame({
 
 print("\n=== MODEL KARŞILAŞTIRMA (Test Seti) ===")
 print(comparison_df.to_string(index=False))
+
+
+# ============================================================
+# 5) SONUÇLARIN TABLO VE GÖRSELLERLE ANALİZİ
+#    Amaç:
+#      - Logistic Regression ve Random Forest performans metriklerini
+#        tek grafikte karşılaştırmak
+#      - Confusion matrix'leri görselleştirerek hangi sınıfta
+#        daha çok hata yapıldığını incelemek
+# ============================================================
+
+# 5.1) Model performanslarını çubuk grafik ile karşılaştırma
+metrics_names = ["Accuracy", "Precision", "Recall", "F1-score"]
+log_values = [acc_log, prec_log, rec_log, f1_log]
+rf_values  = [acc_rf,  prec_rf,  rec_rf,  f1_rf]
+
+x = np.arange(len(metrics_names))
+width = 0.35  # çubuk genişliği
+
+plt.figure()
+plt.bar(x - width/2, log_values, width=width, label="Logistic Regression")
+plt.bar(x + width/2, rf_values,  width=width, label="Random Forest")
+
+plt.xticks(x, metrics_names)
+plt.ylim(0, 1)
+plt.ylabel("Değer")
+plt.title("Modellerin Test Performans Karşılaştırması")
+plt.legend()
+plt.grid(axis="y", linestyle="--", alpha=0.5)
+plt.show()
+
+# 5.2) Confusion matrix'leri görselleştirme
+def plot_confusion_matrix(cm, title):
+    """
+    Basit bir confusion matrix görselleştirme fonksiyonu.
+    cm: 2x2 confusion_matrix çıktısı
+    """
+    plt.figure()
+    plt.imshow(cm, interpolation="nearest")
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(2)
+    class_names = ["0 (Düşük/Orta)", "1 (Yüksek)"]
+    plt.xticks(tick_marks, class_names, rotation=45)
+    plt.yticks(tick_marks, class_names)
+
+    # Hücrelerin içine sayıları yaz
+    thresh = cm.max() / 2.0
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            plt.text(
+                j, i, cm[i, j],
+                horizontalalignment="center",
+                color="white" if cm[i, j] > thresh else "black"
+            )
+
+    plt.ylabel("Gerçek Sınıf")
+    plt.xlabel("Tahmin Edilen Sınıf")
+    plt.tight_layout()
+    plt.show()
+
+# Logistic Regression confusion matrix grafiği
+plot_confusion_matrix(cm_log, "Confusion Matrix - Logistic Regression")
+
+# Random Forest confusion matrix grafiği
+plot_confusion_matrix(cm_rf, "Confusion Matrix - Random Forest")
