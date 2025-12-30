@@ -19,13 +19,13 @@ from sklearn.metrics import (
 )
 
 
-# ============================================================
+# ===========================================================
 # 0) VERİYİ YÜKLE VE TEMEL ÖNİŞLEME
 #    - high_rating (0/1) hedef değişkenini oluştur
 #    - runtimeMinutes = 0 olanları temizle (gerekirse)
 #    - numVotes_log (log dönüşüm) oluştur
 #    - primary_genre (ana tür) çıkar
-# ============================================================
+# ===========================================================
 
 # Script dosyasının dizinini al ve CSV dosyasını bu dizinden oku
 script_dir = os.path.dirname(os.path.abspath(__file__))
